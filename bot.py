@@ -25,7 +25,7 @@ async def download(ctx: discord.ApplicationContext, url: str):
 
 	command_1 = "yt-dlp -f bv[filesize<8M]+ba[filesize<2M] --print after_move:filepath --force-overwrites " + url
 	ytdlp_run_1 = run(command_1.split(), stdout=PIPE, stderr=PIPE)
-	if ytdlp_run_1.returncode = 0:
+	if ytdlp_run_1.returncode == 0:
 		filepath = ytdlp_run_1.stdout.decode().strip()
 	else:
 		command_2 = "yt-dlp -S size:10M -O %(filesize,filesize_approx)s " + url
