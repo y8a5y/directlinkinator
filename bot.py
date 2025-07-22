@@ -13,31 +13,32 @@ bot = discord.Bot(intents=intents)
 async def download(ctx: discord.ApplicationContext, url: str):
 	at = datetime.datetime.now().isoformat(timespec="seconds")
 	by = ctx.author.name
-	base_log = "# at {} user {} used /download url={}".format(at, by, url)
+	print("# at {} user {} used /download url={}".format(at, by, url))
 
 	if not validators.url(url):
 		error_msg = "Sorry, not a valid url."
-		print(base_log + "\nerror_msg: " + error_msg, file=stderr)
+		print("error_msg: " + error_msg, file=stderr)
 		await ctx.respond(error_msg)
 		return
 
 	await ctx.defer()
 
-#	filesize_run = run(["yt-dlp", "-f", "bv[filesize<8M]+ba[filesize<2M]", "-O", "%(filesize,filesize_approx)s", url], stdout=PIPE)
-#	if filesize_run.returncode != 0 or int(filesize_run.stdout.decode().strip()) > 10_000_000: # >10Mo
-#		await ctx.respond("Sorry, the given video seems to be too big (>10Mo).", ephemeral=True)
-#		return
+	command_1 = "yt-dlp -f bv[filesize<8M]+ba[filesize<2M] --print after_move:filepath --force-overwrites " + url
+	ytdlp_run_1 = run(command_1.split(), stdout=PIPE, stderr=PIPE)
+	if ytdlp_run_1.returncode = 0:
+		filepath = ytdlp_run_1.stdout.decode().strip()
+	else:
+		command_2 = "yt-dlp -S size:10M -O %(filesize,filesize_approx)s " + url
+		ytdlp_run_2 = run(command_2.split(), stdout=PIPE, stderr=PIPE)
+		if ytdlp_run_2.returncode != 0 or int(ytdlp_run_2.stdout.decode().strip()) > 10_000_000: # >10Mo
+			error_msg = "Sorry, something went wrong. Video may be too big (>10Mo)."
+			print("error_msg: " + error_msg)
+			print("command_1: {}\ncommand_1.stderr:\n{}".format(command_1, ytdlp_run_1.stderr.decode()).rstrip(), file=stderr)
+			print("command_2: {}\ncommand_2.stderr:\n{}".format(command_2, ytdlp_run_2.stderr.decode()), file=stderr)
+			await ctx.respond(error_msg)
+			return
+		filepath = ytdlp_run_2.stdout.decode().strip()
 
-	command = "yt-dlp -f bv[filesize<8M]+ba[filesize<2M] --print after_move:filepath --force-overwrites " + url
-	filepath_run = run(command.split(), stdout=PIPE, stderr=PIPE)
-	if filepath_run.returncode != 0:
-		error_msg = "Sorry, something went wrong. Video may be too big (>10Mo)."
-		print(base_log + "\nerror_msg: {}\ncommand: {}\ncommand.stderr:\n{}".format(error_msg, command, filepath_run.stderr.decode()), file=stderr)
-		await ctx.respond(error_msg)
-		return
-
-	filepath = filepath_run.stdout.decode().strip()
-	print(base_log)
 	await ctx.send_followup(file=discord.File(filepath))
 	if os.path.exists(filepath):
 		os.remove(filepath)
